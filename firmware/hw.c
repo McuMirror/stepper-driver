@@ -2,9 +2,6 @@
 #include "stm32f30x.h"
 #include "usb_lib.h"
 
-#define PWM_PERIOD 2250
-#define CL_PERIOD 2250
-
 void hw_init() {
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;

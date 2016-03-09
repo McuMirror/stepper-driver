@@ -28,4 +28,5 @@ void USBWakeUp_IRQHandler(void) {
 
 void TIM1_UP_TIM16_IRQHandler(void) {
     control_loop();
+    TIM_ClearFlag(TIM16,TIM_FLAG_Update);
 }

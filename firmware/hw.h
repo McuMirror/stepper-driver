@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define PWM_PERIOD 2250
+#define CL_PERIOD 2250
+
 void hw_init();
 void hw_led_on();
 void hw_led_off();
