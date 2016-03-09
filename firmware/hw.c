@@ -3,16 +3,18 @@
 #include "usb_lib.h"
 
 #define PWM_PERIOD 2250
+#define CL_PERIOD 2250
 
 void hw_init() {
     GPIO_InitTypeDef GPIO_InitStructure;
     TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
     TIM_OCInitTypeDef TIM_OCInitStructure;
+    NVIC_InitTypeDef NVIC_InitStructure;
  
     // Clocks 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA | RCC_AHBPeriph_GPIOB | RCC_AHBPeriph_GPIOC, ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM15, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM15 | RCC_APB2Periph_TIM16, ENABLE);
  
     // LED
     hw_led_off();
@@ -24,11 +26,9 @@ void hw_init() {
     GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     // PWM Output Timers
-    hw_pwm(0, 0, 0, 0, 0, 0);
-
     TIM_TimeBaseStructure.TIM_Prescaler = 0;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseStructure.TIM_Period = PWM_PERIOD;
+    TIM_TimeBaseStructure.TIM_Period = PWM_PERIOD - 1;
     TIM_TimeBaseStructure.TIM_ClockDivision = 0;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseStructure);
@@ -83,6 +83,23 @@ void hw_init() {
     GPIO_PinAFConfig(GPIOB, GPIO_PinSource15, GPIO_AF_2);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource15, GPIO_AF_1);
     GPIO_PinAFConfig(GPIOB, GPIO_PinSource3,  GPIO_AF_1);
+
+    // Control loop timer
+    TIM_TimeBaseStructure.TIM_Prescaler = 0;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseStructure.TIM_Period = CL_PERIOD - 1;
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM16, &TIM_TimeBaseStructure);
+    TIM_Cmd(TIM16, ENABLE);
+
+    // NVIC
+    NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_TIM16_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+    TIM_ITConfig(TIM16, TIM_IT_Update, ENABLE);
 
     // USB
     Set_System();

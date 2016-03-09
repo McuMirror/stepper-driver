@@ -867,19 +867,15 @@ uint8_t Setup0_Process(void)
     uint8_t* b;
     uint16_t* w;
   } pBuf;
-  uint16_t offset = 0;
 
-  pBuf.b = PMAAddr + (uint8_t *)(_GetEPRxAddr(ENDP0)); /* *2 for 32 bits addr */
+  pBuf.b = (uint8_t *)(PMAAddr + _GetEPRxAddr(ENDP0));
 
   if (pInformation->ControlState != PAUSE)
   {
     pInformation->USBbmRequestType = *pBuf.b++; /* bmRequestType */
     pInformation->USBbRequest = *pBuf.b++; /* bRequest */
-    pBuf.w += offset;  /* word not accessed because of 32 bits addressing */
     pInformation->USBwValue = ByteSwap(*pBuf.w++); /* wValue */
-    pBuf.w += offset;  /* word not accessed because of 32 bits addressing */
     pInformation->USBwIndex  = ByteSwap(*pBuf.w++); /* wIndex */
-    pBuf.w += offset;  /* word not accessed because of 32 bits addressing */
     pInformation->USBwLength = *pBuf.w; /* wLength */
   }
 
