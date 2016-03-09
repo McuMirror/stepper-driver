@@ -1,5 +1,6 @@
 #include "hw.h"
 #include "stm32f30x.h"
+#include "usb_lib.h"
 
 void hw_init() {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -14,6 +15,12 @@ void hw_init() {
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+    // USB
+    Set_System();
+    Set_USBClock();
+    USB_Config();
+    USB_Init();
 }
 
 void hw_led_on() {

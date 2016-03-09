@@ -48,8 +48,8 @@
 /* rx/tx buffer base address */
 #define ENDP0_RXADDR        (0x40)
 #define ENDP0_TXADDR        (0x80)
-#define ENDP1_RXADDR          (0xC0)
-#define ENDP2_TXADDR          (0x100)
+#define ENDP1_RXADDR        (0xC0)
+#define ENDP2_TXADDR        (0x100)
 
 /*-------------------------------------------------------------*/
 /* -------------------   ISTR events  -------------------------*/

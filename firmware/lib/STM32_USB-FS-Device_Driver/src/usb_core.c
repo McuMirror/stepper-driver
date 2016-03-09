@@ -867,9 +867,9 @@ uint8_t Setup0_Process(void)
     uint8_t* b;
     uint16_t* w;
   } pBuf;
-  uint16_t offset = 1;
+  uint16_t offset = 0;
 
-  pBuf.b = PMAAddr + (uint8_t *)(_GetEPRxAddr(ENDP0) * 2); /* *2 for 32 bits addr */
+  pBuf.b = PMAAddr + (uint8_t *)(_GetEPRxAddr(ENDP0)); /* *2 for 32 bits addr */
 
   if (pInformation->ControlState != PAUSE)
   {

@@ -67,7 +67,6 @@ void (*pEpInt_OUT[7])(void) =
     EP7_OUT_Callback,
   };
 
-
 /*******************************************************************************
 * Function Name  : USB_Istr
 * Description    : ISTR events interrupt service routine
@@ -82,13 +81,25 @@ void USB_Istr(void)
   
   wIstr = _GetISTR();
 
+#if (IMR_MSK & ISTR_SOF)
+  if (wIstr & ISTR_SOF & wInterrupt_Mask)
+  {
+    _SetISTR((uint16_t)CLR_SOF);
+    bIntPackSOF++;
+
+#ifdef SOF_CALLBACK
+    SOF_Callback();
+#endif
+  }
+#endif
+  /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/  
+  
 #if (IMR_MSK & ISTR_CTR)
   if (wIstr & ISTR_CTR & wInterrupt_Mask)
   {
     /* servicing of the endpoint correct transfer interrupt */
     /* clear of the CTR flag into the sub */
     CTR_LP();
-
 #ifdef CTR_CALLBACK
     CTR_Callback();
 #endif
@@ -159,18 +170,7 @@ void USB_Istr(void)
   }
 #endif
   /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/
-#if (IMR_MSK & ISTR_SOF)
-  if (wIstr & ISTR_SOF & wInterrupt_Mask)
-  {
-    _SetISTR((uint16_t)CLR_SOF);
-    bIntPackSOF++;
 
-#ifdef SOF_CALLBACK
-    SOF_Callback();
-#endif
-  }
-#endif
-  /*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*/
 #if (IMR_MSK & ISTR_ESOF)
   if (wIstr & ISTR_ESOF & wInterrupt_Mask)
   {
@@ -229,18 +229,5 @@ void USB_Istr(void)
 #endif
 } /* USB_Istr */
 
-/*******************************************************************************
-* Function Name  : USB_Istr
-* Description    : Start of frame callback function.
-* Input          : None.
-* Output         : None.
-* Return         : None.
-*******************************************************************************/
-/*
-void SOF_Callback(void)
-{
-}
-*/
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
