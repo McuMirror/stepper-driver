@@ -1,4 +1,5 @@
 #include "stm32f30x_it.h"
+#include "hw.h"
 #include "usb_istr.h"
 #include "control_loop.h"
 
@@ -28,5 +29,6 @@ void USBWakeUp_IRQHandler(void) {
 
 void TIM1_UP_TIM16_IRQHandler(void) {
     control_loop();
+    hw_start_adc_conversion();
     TIM_ClearFlag(TIM16,TIM_FLAG_Update);
 }
