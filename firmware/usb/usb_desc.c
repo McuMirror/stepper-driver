@@ -69,8 +69,8 @@ const uint8_t USB_ConfigDescriptor[] =
     0x01,                                 /* bNumInterfaces */
     0x01,                                 /* bConfigurationValue */
     0x00,                                 /* iConfiguration */
-    0xC0,                                 /* bmAttributes Self Powred*/
-    0x32,                                 /* bMaxPower = 100 mA*/
+    0x80,                                 /* bmAttributes Self Powred*/
+    0xFA,                                 /* bMaxPower = 500 mA*/
     /* 09 byte*/
 
     /* Standard interface descriptor */

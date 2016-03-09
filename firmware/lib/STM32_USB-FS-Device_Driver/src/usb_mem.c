@@ -47,18 +47,20 @@
 *******************************************************************************/
 void UserToPMABufferCopy(uint8_t *pbUsrBuf, uint16_t wPMABufAddr, uint16_t wNBytes)
 {
-  uint32_t n = (wNBytes + 1);
-  uint32_t i, temp1, temp2;
-  uint16_t *pdwVal;
-  pdwVal = (uint16_t *)(wPMABufAddr + PMAAddr);
-  for (i = n; i != 0; i--)
-  {
-    temp1 = (uint16_t) * pbUsrBuf;
-    pbUsrBuf++;
-    temp2 = temp1 | (uint16_t) * pbUsrBuf << 8;
-    *pdwVal++ = temp2;
-    pbUsrBuf++;
-  }
+    uint16_t *pdwVal = (uint16_t *)(wPMABufAddr + PMAAddr);
+    uint16_t temp;
+    int i;
+    for(i = 0; i < wNBytes; i++) {
+        if(i % 2 == 0) {
+            ((uint8_t*)&temp)[0] = pbUsrBuf[i];
+        } else {
+            ((uint8_t*)&temp)[1] = pbUsrBuf[i];
+            pdwVal[i / 2] = temp;
+        }
+    }
+    if(i % 2 == 1) {
+        pdwVal[i / 2] = temp;
+    }
 }
 
 /*******************************************************************************
@@ -72,15 +74,10 @@ void UserToPMABufferCopy(uint8_t *pbUsrBuf, uint16_t wPMABufAddr, uint16_t wNByt
 *******************************************************************************/
 void PMAToUserBufferCopy(uint8_t *pbUsrBuf, uint16_t wPMABufAddr, uint16_t wNBytes)
 {
-  uint32_t n = (wNBytes + 1);
-  uint32_t i;
-  uint16_t *pdwVal;
-  pdwVal = (uint16_t *)(wPMABufAddr + PMAAddr);
-  for (i = n; i != 0; i--)
-  {
-    *(uint16_t*)pbUsrBuf++ = *pdwVal++;
-    pbUsrBuf++;
-  }
+    uint8_t *pdbVal = (uint8_t *)(wPMABufAddr + PMAAddr);
+    for(int i = 0; i < wNBytes; i++) {
+        pbUsrBuf[i] = pdbVal[i];
+    }
 }
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
