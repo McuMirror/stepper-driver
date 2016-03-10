@@ -78,7 +78,7 @@ const uint8_t USB_ConfigDescriptor[] =
     0x04,                                 /* bDescriptorType */
     0x00,                                 /* bInterfaceNumber */
     0x00,                                 /* bAlternateSetting */
-    0x02,                                 /* bNumEndpoints */
+    0x03,                                 /* bNumEndpoints */
     0xFF,                                 /* bInterfaceClass */
     0xFF,                                 /* bInterfaceSubClass */
     0xFF,                                 /* bInterfaceProtocol */
@@ -98,7 +98,17 @@ const uint8_t USB_ConfigDescriptor[] =
     /* Endpoint 2 - Standard Descriptor */
     7,                                    /* bLength */
     0x05,                                 /* bDescriptorType */
-    0x82,                                 /* bEndpointAddress 1 in endpoint*/
+    0x82,                                 /* bEndpointAddress 2 in endpoint*/
+    0x02,                                 /* bmAttributes */
+    BULK_PACKET_LEN,                      /* wMaxPacketSize 64 bytes*/
+    0x00,
+    0x00,                                 /* bInterval */
+    /* 07 byte*/
+
+    /* Endpoint 3 - Standard Descriptor */
+    7,                                    /* bLength */
+    0x05,                                 /* bDescriptorType */
+    0x83,                                 /* bEndpointAddress 3 in endpoint*/
     0x02,                                 /* bmAttributes */
     BULK_PACKET_LEN,                      /* wMaxPacketSize 64 bytes*/
     0x00,

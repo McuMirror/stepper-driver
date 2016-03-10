@@ -35,7 +35,7 @@
 /* defines how many endpoints are used by the device */
 /*-------------------------------------------------------------*/
 
-#define EP_NUM              (3)
+#define EP_NUM              (4)
 
 /*-------------------------------------------------------------*/
 /* --------------   Buffer Description Table  -----------------*/
@@ -50,6 +50,7 @@
 #define ENDP0_TXADDR        (0x80)
 #define ENDP1_RXADDR        (0xC0)
 #define ENDP2_TXADDR        (0x100)
+#define ENDP3_TXADDR        (0x140)
 
 /*-------------------------------------------------------------*/
 /* -------------------   ISTR events  -------------------------*/
@@ -73,7 +74,7 @@
 /* associated to defined endpoints */
 #define  EP1_IN_Callback   NOP_Process
 // #define  EP2_IN_Callback   NOP_Process
-#define  EP3_IN_Callback   NOP_Process
+// #define  EP3_IN_Callback   NOP_Process
 #define  EP4_IN_Callback   NOP_Process
 #define  EP5_IN_Callback   NOP_Process
 #define  EP6_IN_Callback   NOP_Process

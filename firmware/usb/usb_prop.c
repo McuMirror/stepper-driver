@@ -40,6 +40,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
+__IO uint8_t ep2_needs_zlp;
+__IO uint8_t ep3_needs_zlp;
+
+__IO uint8_t ep2_needs_data;
+__IO uint8_t ep3_needs_data;
+
+
 DEVICE Device_Table =
   {
     EP_NUM,
@@ -164,6 +171,16 @@ void USB_Reset()
   SetEPTxAddr(ENDP2, ENDP2_TXADDR);
   SetEPTxStatus(ENDP2, EP_TX_NAK);
   SetEPRxStatus(ENDP2, EP_RX_DIS);
+  ep2_needs_zlp = 0;
+  ep2_needs_data = 1;
+
+  // Initialize Endpoint 3
+  SetEPType(ENDP3, EP_BULK);
+  SetEPTxAddr(ENDP3, ENDP3_TXADDR);
+  SetEPTxStatus(ENDP3, EP_TX_NAK);
+  SetEPRxStatus(ENDP3, EP_RX_DIS);
+  ep3_needs_zlp = 0;
+  ep3_needs_data = 1;
 
   // Set this device to response on default address
   SetDeviceAddress(0);

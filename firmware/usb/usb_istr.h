@@ -90,6 +90,7 @@ void EP7_OUT_Callback(void);
 
 void EP1_Check_Ready();
 void EP2_Check_Ready();
+void EP3_Check_Ready();
 
 #endif /*__USB_ISTR_H*/
 

@@ -48,6 +48,12 @@ uint8_t *USB_GetDeviceDescriptor(uint16_t );
 uint8_t *USB_GetConfigDescriptor(uint16_t);
 uint8_t *USB_GetStringDescriptor(uint16_t);
 
+extern __IO uint8_t ep2_needs_zlp;
+extern __IO uint8_t ep3_needs_zlp;
+
+extern __IO uint8_t ep2_needs_data;
+extern __IO uint8_t ep3_needs_data;
+
 /* Exported define -----------------------------------------------------------*/
 #define USB_GetConfiguration          NOP_Process
 //#define USB_SetConfiguration          NOP_Process

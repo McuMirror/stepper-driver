@@ -37,7 +37,7 @@
 /* Exported define -----------------------------------------------------------*/
 
 #define DEVICE_DESCRIPTOR_LENGTH 18
-#define CONFIG_DESCRIPTOR_LENGTH 32
+#define CONFIG_DESCRIPTOR_LENGTH 39
 #define STRING_LANG_ID_LENGTH 4 
 #define STRING_VENDOR_LENGTH 32 
 #define STRING_PRODUCT_LENGTH 30
