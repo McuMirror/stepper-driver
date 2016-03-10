@@ -7,6 +7,7 @@
 
 static int16_t adc_conversion[6];
 static int16_t adc_zero[6];
+static int16_t adc_buffer[6];
 
 void hw_init() {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -106,17 +107,6 @@ void hw_init() {
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource15, GPIO_AF_1);
     GPIO_PinAFConfig(GPIOB, GPIO_PinSource3,  GPIO_AF_1);
 
-    // ADC Calibration
-    ADC_StructInit(&ADC_InitStructure);
-    ADC_VoltageRegulatorCmd(ADC1, ENABLE);
-    static volatile int i;
-    for(i = 0; i < 720000; i++); // 10 us delay
-
-    ADC_SelectCalibrationMode(ADC1, ADC_CalibrationMode_Single);
-    ADC_StartCalibration(ADC1);
-
-    while(ADC_GetCalibrationStatus(ADC1) != RESET );
-
     // ADC DMA
     DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&(ADC1->DR);
     DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)adc_conversion;
@@ -131,6 +121,17 @@ void hw_init() {
     DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
     DMA_Init(DMA1_Channel1, &DMA_InitStructure);
     DMA_Cmd(DMA1_Channel1, ENABLE);
+
+    // ADC Calibration
+    ADC_DeInit(ADC1);
+    ADC_VoltageRegulatorCmd(ADC1, ENABLE);
+    static volatile int i;
+    for(i = 0; i < 720000; i++); // 10 us delay
+
+    ADC_SelectCalibrationMode(ADC1, ADC_CalibrationMode_Single);
+    ADC_StartCalibration(ADC1);
+
+    while(ADC_GetCalibrationStatus(ADC1) != RESET);
 
     // ADC
     ADC_CommonInitStructure.ADC_Mode = ADC_Mode_Independent;
@@ -186,7 +187,7 @@ void hw_init() {
     TIM_TimeBaseInit(TIM16, &TIM_TimeBaseStructure);
     TIM_Cmd(TIM16, ENABLE);
 
-    //TIM16->CNT = TIM1->CNT + ADC_DELAY;
+    TIM16->CNT = TIM1->CNT + ADC_DELAY;
 
     // NVIC
     NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_TIM16_IRQn;
@@ -215,6 +216,9 @@ void hw_pwm(int16_t m1a, int16_t m1b, int16_t m2a, int16_t m2b, int16_t m3a, int
 }
 
 void hw_start_adc_conversion() {
+    for(int i = 0; i < 6; i++) {
+        adc_buffer[i] = adc_zero[i] - adc_conversion[i];
+    }
     ADC_StartConversion(ADC1);
 }
 
@@ -224,4 +228,12 @@ void hw_led_on() {
 
 void hw_led_off() {
     GPIOC->BRR = GPIO_Pin_14;
+}
+
+void hw_start_control_loop() {
+    TIM_ITConfig(TIM16, TIM_IT_Update, ENABLE);
+}
+
+void hw_stop_control_loop() {
+    TIM_ITConfig(TIM16, TIM_IT_Update, DISABLE);
 }

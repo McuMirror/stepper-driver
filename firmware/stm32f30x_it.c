@@ -3,6 +3,8 @@
 #include "usb_istr.h"
 #include "control_loop.h"
 
+volatile uint16_t spare_cycles;
+
 void HardFault_Handler(void) {
     for(;;);
 }
@@ -28,7 +30,8 @@ void USBWakeUp_IRQHandler(void) {
 }
 
 void TIM1_UP_TIM16_IRQHandler(void) {
-    control_loop();
     hw_start_adc_conversion();
+    control_loop();
     TIM_ClearFlag(TIM16,TIM_FLAG_Update);
+    spare_cycles = PWM_PERIOD - TIM16->CNT;
 }
