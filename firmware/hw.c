@@ -7,7 +7,7 @@
 
 static int16_t adc_conversion[6];
 static int16_t adc_zero[6];
-static int16_t adc_buffer[6];
+int16_t adc_buffer[6];
 
 void hw_init() {
     GPIO_InitTypeDef GPIO_InitStructure;

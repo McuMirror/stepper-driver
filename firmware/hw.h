@@ -7,6 +7,8 @@
 #define PWM_PERIOD 2250
 #define PWM_DT ((float)(PWM_PERIOD) / (SYSTEM_CLOCK))
 
+#define CURRENT_SCALE (3.3 / (4096 * 4.7 * 0.1))
+
 void hw_init();
 void hw_led_on();
 void hw_led_off();
@@ -15,4 +17,6 @@ void hw_pwm(int16_t m1a, int16_t m1b, int16_t m2a, int16_t m2b, int16_t m3a, int
 void hw_start_control_loop();
 void hw_stop_control_loop();
  
+extern int16_t adc_buffer[6];
+
 #endif

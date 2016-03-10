@@ -35,5 +35,6 @@ extern cmd_functions_t cmd_move_abs;
 extern cmd_functions_t cmd_move_rel;
 extern cmd_functions_t cmd_zero_abs;
 extern cmd_functions_t cmd_zero_rel;
+extern cmd_functions_t cmd_stream;
 
 #endif

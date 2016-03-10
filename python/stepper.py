@@ -1,5 +1,7 @@
 import asyncusb
 import asyncio
+import struct
+import numpy as np
 
 class StepperError(Exception): pass
 
@@ -37,14 +39,21 @@ class Stepper:
     async def status(self):
         with self:
             transfer = await asyncusb.asyncBulkTransfer(
-                self.handle, asyncusb.ENDPOINT_IN | self.ENDPOINT_STATUS,
-                64)
+                self.handle, asyncusb.ENDPOINT_IN | self.ENDPOINT_STREAM,
+                4 * 1024 * 1024)
             chunk = transfer.getBuffer()[:transfer.getActualLength()]
-            print(chunk)
+            s = len(chunk)
+            data = struct.unpack("<" + "f" * (s // 4), chunk)
+            data = np.array(data)
+            data = np.reshape(data, (-1, 2)).T
+            return (data[0], data[1])
 
 if __name__ == "__main__":
     async def run():
         s = Stepper()
-        await s.status()
+        (a, b) = await s.status()
+        import matplotlib.pyplot as plt
+        plt.plot(range(len(a)), a, 'r-', range(len(b)), b, 'b-')
+        plt.show()
 
     asyncio.get_event_loop().run_until_complete(run())

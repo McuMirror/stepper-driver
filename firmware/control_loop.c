@@ -4,6 +4,13 @@
 #include "motor.h"
 
 void control_loop() {
+    motor[0].current_a = (float)adc_buffer[0] * CURRENT_SCALE;
+    motor[0].current_b = (float)adc_buffer[1] * CURRENT_SCALE;
+    motor[1].current_a = (float)adc_buffer[2] * CURRENT_SCALE;
+    motor[1].current_b = (float)adc_buffer[3] * CURRENT_SCALE;
+    motor[2].current_a = (float)adc_buffer[4] * CURRENT_SCALE;
+    motor[2].current_b = (float)adc_buffer[5] * CURRENT_SCALE;
+
     motor_step(&motor[0]);
     motor_step(&motor[1]);
     motor_step(&motor[2]);

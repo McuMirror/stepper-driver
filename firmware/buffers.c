@@ -11,7 +11,7 @@ circ_buffer_t status_buffer = {
 
 circ_buffer_t stream_buffer = {
   .addr = stream_mem,
-  .size = sizeof(status_mem)
+  .size = sizeof(stream_mem)
 };
 
 uint8_t stream_flush;

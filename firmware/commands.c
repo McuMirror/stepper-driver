@@ -1,6 +1,8 @@
 #include "commands.h"
-#include "hw.h"
 #include "motor.h"
+#include "circular_buffer.h"
+#include "buffers.h"
+#include "hw.h"
 #include <stddef.h>
 
 // Halt
@@ -70,13 +72,8 @@ DECLARE_CMD(move_rel);
 static void zero_abs_load(motor_t* m, cmd_data_t* data) {
     float* z = (float*)data;
 
-    if(z == NULL) {
-        m->zero += m->p;
-        m->p = 0;
-    } else {
-        m->zero += m->p - *z;
-        m->p = *z;
-    }
+    m->zero += m->p - *z;
+    m->p = *z;
     m->zero -= (int32_t)m->zero;
 }
 
@@ -93,10 +90,8 @@ DECLARE_CMD(zero_abs);
 static void zero_rel_load(motor_t* m, cmd_data_t* data) {
     float* z = (float*)data;
 
-    if(z != NULL) {
-        m->zero += *z;
-        m->p -= *z;
-    }
+    m->zero += *z;
+    m->p -= *z;
     m->zero -= (int32_t)m->zero;
 }
 
@@ -107,3 +102,21 @@ static void zero_rel_step(motor_t* m, cmd_data_t* data) {
 }
 
 DECLARE_CMD(zero_rel);
+
+// Stream
+
+static void stream_load(motor_t* m, cmd_data_t* data) {
+    stream_t* stream = (stream_t*)data;
+
+    m->stream = *stream;
+    stream_flush = 1;
+    EP3_Check_Ready();
+}
+
+static void stream_step(motor_t* m, cmd_data_t* data) {
+    motor_done(m);
+    m->pc++;
+    motor_load(m);
+}
+
+DECLARE_CMD(stream);

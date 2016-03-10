@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include "commands.h"
 
+typedef enum stream {
+    STREAM_NONE,
+    STREAM_CURRENT
+} stream_t;
+
 typedef struct motor {
     enum {
         MOTOR_RUN,
@@ -13,10 +18,14 @@ typedef struct motor {
     float v;
     float amp;
     float zero;
+    float current_a;
+    float current_b;
     cmd_functions_t * const * program;
     cmd_data_t * const * program_data;
     uint8_t pc;
     uint8_t ix;
+    stream_t stream;
+    const char * error;
 } motor_t;
 
 extern motor_t motor[3];
