@@ -29,9 +29,9 @@ int main() {
     //program_instruction(0, 0, NULL, 0); // halt
     //program_end(0);
     //program_load(0);
-    program_immediate(0, 2, &mymove, sizeof(mymove));
-    for(i = 0; i < 2000000; i++);
-    program_immediate(0, 2, &mymove, sizeof(mymove));
+    //program_immediate(0, 2, &mymove, sizeof(mymove));
+    //for(i = 0; i < 2000000; i++);
+    //program_immediate(0, 2, &mymove, sizeof(mymove));
 
     //static cmd_data_t * const myprogdata[4] = {&stream_current, &mymove, &stream_nothing, NULL};
     //static cmd_data_t * const myprogdata2[2] = {&mymove2, NULL};

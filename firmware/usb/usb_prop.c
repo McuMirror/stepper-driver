@@ -35,6 +35,8 @@
 #include "usb_desc.h"
 #include "usb_pwr.h"
 
+#include "program.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -102,11 +104,40 @@ ONE_DESCRIPTOR String_Descriptor[4] =
     {(uint8_t*)USB_StringSerial, STRING_SERIAL_LENGTH},
   };
 
+static uint8_t control_transfer_buffer[64];
+uint8_t error_code;
+
 /* Extern variables ----------------------------------------------------------*/
 /* Extern variables ----------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Extern function prototypes ------------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+
+uint8_t* USB_Read_Data(uint16_t Length)
+{
+  uint32_t wOffset=pInformation->Ctrl_Info.Usb_wOffset;
+
+  if (Length == 0)
+  {
+    pInformation->Ctrl_Info.Usb_wLength = sizeof(control_transfer_buffer) - wOffset;
+    return 0;
+  }
+
+  return (uint8_t*)(control_transfer_buffer + wOffset);
+}
+
+uint8_t* USB_Get_Error(uint16_t Length)
+{
+  uint32_t wOffset=pInformation->Ctrl_Info.Usb_wOffset;
+
+  if (Length == 0)
+  {
+    pInformation->Ctrl_Info.Usb_wLength = sizeof(error_code) - wOffset;
+    return 0;
+  }
+
+  return (uint8_t*)(&error_code + wOffset);
+}
 
 /*******************************************************************************
 * Function Name  : USB_init.
@@ -224,6 +255,21 @@ void USB_SetDeviceAddress (void)
 *******************************************************************************/
 void USB_Status_In(void)
 {
+  uint16_t wValue = ByteSwap(pInformation->USBwValue);
+  uint16_t wIndex = ByteSwap(pInformation->USBwIndex);
+  uint16_t wLength = pInformation->USBwLength;
+
+  switch(pInformation->USBbRequest)
+  {
+    case USB_PROGRAM_INSTRUCTION:
+      error_code = program_instruction(wValue, wIndex, control_transfer_buffer, wLength);
+      break;
+    case USB_PROGRAM_IMMEDIATE:
+      error_code = program_immediate(wValue, wIndex, control_transfer_buffer, wLength);
+      break;
+    default:
+      break;
+  }
 }
 
 /*******************************************************************************
@@ -246,7 +292,26 @@ void USB_Status_Out (void)
 *******************************************************************************/
 RESULT USB_Data_Setup(uint8_t RequestNo)
 {
-    return USB_UNSUPPORT;
+  uint8_t *(*CopyRoutine)(uint16_t);
+  CopyRoutine = NULL;
+
+  switch(RequestNo)
+  {
+    case USB_PROGRAM_INSTRUCTION:
+    case USB_PROGRAM_IMMEDIATE:
+      CopyRoutine = USB_Read_Data;
+      break;
+    case USB_GET_ERROR:
+      CopyRoutine = USB_Get_Error;
+      break;
+    default:
+      return USB_UNSUPPORT;
+  }
+
+  pInformation->Ctrl_Info.CopyData = CopyRoutine;
+  pInformation->Ctrl_Info.Usb_wOffset = 0;
+  (*CopyRoutine)(0);
+  return USB_SUCCESS;
 }
 
 /*******************************************************************************
@@ -258,7 +323,28 @@ RESULT USB_Data_Setup(uint8_t RequestNo)
 *******************************************************************************/
 RESULT USB_NoData_Setup(uint8_t RequestNo)
 {
-    return USB_UNSUPPORT;
+  uint16_t wValue = ByteSwap(pInformation->USBwValue);
+  uint16_t wIndex = ByteSwap(pInformation->USBwIndex);
+
+  switch(RequestNo) {
+    case USB_PROGRAM_START:
+      error_code = program_start(wValue);
+      return USB_SUCCESS;
+    case USB_PROGRAM_INSTRUCTION:
+      error_code = program_instruction(wValue, wIndex, NULL, 0);
+      break;
+    case USB_PROGRAM_END:
+      error_code = program_end(wValue);
+      return USB_SUCCESS;
+    case USB_PROGRAM_LOAD:
+      error_code = program_load(wValue);
+      return USB_SUCCESS;
+    case USB_PROGRAM_IMMEDIATE:
+      error_code = program_immediate(wValue, wIndex, NULL, 0);
+      break;
+    default:
+      return USB_UNSUPPORT;
+  }
 }
 
 /*******************************************************************************
