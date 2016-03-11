@@ -13,26 +13,28 @@ enum {
     CMD_START,
     CMD_FINISHED,
     CMD_ERROR
-};
+}; // status printouts
+
+enum {
+    MOTOR_STOP,
+    MOTOR_RUN,
+    MOTOR_ERROR
+}; // motor.state
 
 typedef volatile struct motor {
-    enum {
-        MOTOR_STOP,
-        MOTOR_RUN,
-        MOTOR_ERROR
-    } state;
+    uint8_t ix;
+    uint8_t state;
     float p;
     float v;
     float amp;
     float zero;
     float current_a;
     float current_b;
-    cmd_functions_t * const * program;
-    cmd_data_t * const * program_data;
     uint8_t pc;
-    uint8_t ix;
     stream_t stream;
     const char * error;
+    cmd_functions_t * const * program;
+    cmd_data_t * const * program_data;
 } motor_t;
 
 extern motor_t motor[3];

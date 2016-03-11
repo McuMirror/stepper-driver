@@ -2,7 +2,6 @@ import asyncusb
 import asyncio
 import asyncutil
 import struct
-import numpy as np
 
 class StepperError(Exception): pass
 
@@ -15,6 +14,9 @@ USB_PROGRAM_END = 0x22
 USB_PROGRAM_LOAD = 0x23
 USB_PROGRAM_IMMEDIATE = 0x24
 USB_GET_ERROR = 0x25
+USB_GET_N_COMMANDS = 0x26
+USB_GET_COMMAND_NAME = 0x27
+USB_GET_COMMAND_DATA_DESCRIPTOR = 0x28
 
 CMD_START = 0
 CMD_FINISHED = 1
@@ -29,6 +31,7 @@ class Stepper(asyncutil.ChildTask):
     ENDPOINT_STREAM = 3
     STATUS_CHUNK_SIZE = 4096
     STREAM_CHUNK_SIZE = 4096
+    MAX_DESCRIPTOR_SIZE = 4096
     CT_TIMEOUT = 100
 
     def __init__(self, loop = None):
@@ -54,6 +57,8 @@ class Stepper(asyncutil.ChildTask):
         self.__runner1 = self.child_start(self.__run1)
         self.__runner2 = self.child_start(self.__run2)
 
+        await self.load()
+
     async def __aexit__(self, type, value, tb):
         try:
             try:
@@ -67,6 +72,87 @@ class Stepper(asyncutil.ChildTask):
             self.handle.close()
             self.handle = None
 
+    async def load(self):
+        transfer = await asyncusb.asyncControlTransfer(
+            self.handle, USB_CONTROL_READ,
+            USB_GET_N_COMMANDS,
+            0, 0, 2, timeout = self.CT_TIMEOUT)
+        data = transfer.getBuffer()[:transfer.getActualLength()]
+        (n,) = struct.unpack("<H", data)
+        command_list = {}
+        for i in range(n):
+            transfer = await asyncusb.asyncControlTransfer(
+                self.handle, USB_CONTROL_READ,
+                USB_GET_COMMAND_NAME,
+                i, 0, self.MAX_DESCRIPTOR_SIZE, timeout = self.CT_TIMEOUT)
+            data = transfer.getBuffer()[:transfer.getActualLength()]
+            if data[-1] == 0: data = data[:-1]
+            name = str(data, encoding="latin-1")
+            transfer = await asyncusb.asyncControlTransfer(
+                self.handle, USB_CONTROL_READ,
+                USB_GET_COMMAND_DATA_DESCRIPTOR,
+                i, 0, self.MAX_DESCRIPTOR_SIZE, timeout = self.CT_TIMEOUT)
+            data = transfer.getBuffer()[:transfer.getActualLength()]
+            if data[-1] == 0: data = data[:-1]
+            descriptor = str(data, encoding="latin-1")
+            self.make_fn(i, name, descriptor)
+            command_list["CMD_" + name.upper()] = i
+        self.COMMAND_LIST = command_list
+        self.__dict__.update(command_list)
+
+    def make_fn(self, num, name, descriptor):
+        args = [a.strip() for a in descriptor.split(";")]
+        assert args[-1] == ""
+        args = args[:-1]
+
+        parsed_args = []
+        sw_internal = False
+
+        for arg in args:
+            (kind, _, arg) = arg.partition(" ")
+            arg = arg.strip()
+            if kind == "arg":
+                assert not sw_internal, "Args must come first"
+                pass
+            elif kind == "internal":
+                sw_internal = True
+                pass
+            else:
+                assert False, "Expected 'arg' or 'internal'"
+            (dtype, _, arg) = arg.partition(" ")
+            arg = arg.strip()
+            struct_letter = {
+                "float": "f",
+                "enum8": "B"
+            }[dtype]
+            if dtype == "enum8":
+                (enum_values, _, arg) = arg.partition('}')
+                arg = arg.strip()
+                enum_values = enum_values.strip()
+                assert enum_values[0] == "{", "enum type needs value list"
+                enum_values = [v.strip() for v in enum_values[1:].split(",")]
+                enum_values = dict(zip(enum_values, range(len(enum_values))))
+                self.__dict__.update(enum_values)
+            else:
+                enum_values = None
+            p_name = arg
+            parsed_args.append((sw_internal, struct_letter, enum_values, p_name))
+
+        def mk(*args):
+            parsed = [(l, v, n) for (i, l, v, n) in parsed_args if not i]
+            if len(args) > len(parsed):
+                raise TypeError("Too many arguments: expected {}, got {}".format(len(parsed), len(args)))
+            struct_str = ""
+            for (i, arg, parsed) in zip(range(1, 1 + len(args)), args, parsed):
+                (l, v, n) = parsed
+                struct_str += l
+                if v is not None and arg not in v.values():
+                    raise TypeError("Argument {} must be one of [{}]".format(i, v.keys()))
+            b = struct.pack(struct_str, *args)
+            return (num, b)
+
+        self.__dict__["cmd_" + name] = mk
+
     @asyncutil.task
     async def __run2(self):
         try:
@@ -76,11 +162,7 @@ class Stepper(asyncutil.ChildTask):
                     self.STREAM_CHUNK_SIZE)
                 chunk = transfer.getBuffer()[:transfer.getActualLength()]
 
-                print(len(chunk))
-                #data = struct.unpack("<" + "f" * (s // 4), chunk)
-                #data = np.array(data)
-                #data = np.reshape(data, (-1, 2)).T
-                #return (data[0], data[1])
+                await self.stream(chunk)
         except asyncusb.USBTransferError as e:
             if e.value != 3: # TRANSFER_CANCELLED
                 raise
@@ -125,7 +207,8 @@ class Stepper(asyncutil.ChildTask):
             motor, 0, b"", timeout = self.CT_TIMEOUT)
         await self.program_error()
 
-    async def program_instruction(self, motor, command, data = b""):
+    async def program_instruction(self, motor, instruction):
+        (command, data) = instruction
         transfer = await asyncusb.asyncControlTransfer(
             self.handle, USB_CONTROL_WRITE,
             USB_PROGRAM_INSTRUCTION,
@@ -146,7 +229,8 @@ class Stepper(asyncutil.ChildTask):
             motor, 0, b"", timeout = self.CT_TIMEOUT)
         await self.program_error()
 
-    async def program_immediate(self, motor, command, data = b""):
+    async def program_immediate(self, motor, instruction):
+        (command, data) = instruction
         transfer = await asyncusb.asyncControlTransfer(
             self.handle, USB_CONTROL_WRITE,
             USB_PROGRAM_IMMEDIATE,
@@ -162,28 +246,9 @@ class Stepper(asyncutil.ChildTask):
         if len(result) != 1: raise StepperError("Short read")
         if ord(result) != 0: raise StepperError("Error code: {}".format(ord(result)))
 
-if __name__ == "__main__":
-    async def run():
-        s = Stepper()
-        async with s:
-        #await s.program_start(0)
-        #await s.program_instruction(0, 2, struct.pack("fffffff", 1, 0, 0, 200, 0, 200, 200))
-        #await s.program_instruction(0, 0)
-        #await s.program_end(0)
-        #await s.program_load(0)
-            await s.program_start(0)
-            await s.program_instruction(0, 5, struct.pack("B", 1))
-            await s.program_instruction(0, 2, struct.pack("fffffff", 0.5, 0, 0, 200, 0, 100, 200))
-            await s.program_instruction(0, 2, struct.pack("fffffff", 0.5, 0, 0, -200, 0, -100, -200))
-            await s.program_instruction(0, 5, struct.pack("B", 0))
-            await s.program_instruction(0, 0)
-            await s.program_end(0)
-            await s.program_load(0)
+    async def until_finished(self, motor):
+        f = self.until_status(motor, CMD_FINISHED)
+        # TODO: query motor, if already finished, cancel F and return
+        await f
 
-            await s.until_status(0, CMD_FINISHED)
-        #(a, b) = await s.status()
-        #import matplotlib.pyplot as plt
-        #plt.plot(range(len(a)), a, 'r-', range(len(b)), b, 'b-')
-        #plt.show()
 
-    asyncio.get_event_loop().run_until_complete(run())

@@ -65,12 +65,15 @@ extern __IO uint8_t ep3_needs_data;
 #define USB_SetDeviceFeature          NOP_Process
 //#define USB_SetDeviceAddress          NOP_Process
 
-#define USB_PROGRAM_START             0x20
-#define USB_PROGRAM_INSTRUCTION       0x21
-#define USB_PROGRAM_END               0x22
-#define USB_PROGRAM_LOAD              0x23
-#define USB_PROGRAM_IMMEDIATE         0x24
-#define USB_GET_ERROR                 0x25
+#define USB_PROGRAM_START               0x20
+#define USB_PROGRAM_INSTRUCTION         0x21
+#define USB_PROGRAM_END                 0x22
+#define USB_PROGRAM_LOAD                0x23
+#define USB_PROGRAM_IMMEDIATE           0x24
+#define USB_GET_ERROR                   0x25
+#define USB_GET_N_COMMANDS              0x26
+#define USB_GET_COMMAND_NAME            0x27
+#define USB_GET_COMMAND_DATA_DESCRIPTOR 0x28
 
 #endif /* __usb_prop_H */
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -37,6 +37,8 @@
 
 #include "program.h"
 
+#include <string.h>
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -106,6 +108,7 @@ ONE_DESCRIPTOR String_Descriptor[4] =
 
 static uint8_t control_transfer_buffer[64];
 uint8_t error_code;
+uint16_t n_commands = N_COMMANDS;
 
 /* Extern variables ----------------------------------------------------------*/
 /* Extern variables ----------------------------------------------------------*/
@@ -137,6 +140,57 @@ uint8_t* USB_Get_Error(uint16_t Length)
   }
 
   return (uint8_t*)(&error_code + wOffset);
+}
+
+uint8_t* USB_Get_N_Commands(uint16_t Length)
+{
+  uint32_t wOffset=pInformation->Ctrl_Info.Usb_wOffset;
+
+  if (Length == 0)
+  {
+    pInformation->Ctrl_Info.Usb_wLength = sizeof(n_commands) - wOffset;
+    return 0;
+  }
+
+  return (uint8_t*)(&n_commands + wOffset);
+}
+
+uint8_t* USB_Get_Command_Name(uint16_t Length)
+{
+  uint32_t wOffset=pInformation->Ctrl_Info.Usb_wOffset;
+
+  uint16_t wValue = ByteSwap(pInformation->USBwValue);
+
+  if (Length == 0)
+  {
+    if(wValue >= N_COMMANDS) {
+      pInformation->Ctrl_Info.Usb_wLength = 0;
+    } else {
+      pInformation->Ctrl_Info.Usb_wLength = 1 + strlen(command_list[wValue]->name) - wOffset;
+    }
+    return 0;
+  }
+
+  return (uint8_t*)(command_list[wValue]->name + wOffset);
+}
+
+uint8_t* USB_Get_Command_Data_Descriptor(uint16_t Length)
+{
+  uint32_t wOffset=pInformation->Ctrl_Info.Usb_wOffset;
+
+  uint16_t wValue = ByteSwap(pInformation->USBwValue);
+
+  if (Length == 0)
+  {
+    if(wValue >= N_COMMANDS) {
+      pInformation->Ctrl_Info.Usb_wLength = 0;
+    } else {
+      pInformation->Ctrl_Info.Usb_wLength = 1 + strlen(command_list[wValue]->data_descriptor) - wOffset;
+    }
+    return 0;
+  }
+
+  return (uint8_t*)(command_list[wValue]->data_descriptor + wOffset);
 }
 
 /*******************************************************************************
@@ -303,6 +357,15 @@ RESULT USB_Data_Setup(uint8_t RequestNo)
       break;
     case USB_GET_ERROR:
       CopyRoutine = USB_Get_Error;
+      break;
+    case USB_GET_N_COMMANDS:
+      CopyRoutine = USB_Get_N_Commands;
+      break;
+    case USB_GET_COMMAND_NAME:
+      CopyRoutine = USB_Get_Command_Name;
+      break;
+    case USB_GET_COMMAND_DATA_DESCRIPTOR:
+      CopyRoutine = USB_Get_Command_Data_Descriptor;
       break;
     default:
       return USB_UNSUPPORT;
