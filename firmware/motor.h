@@ -4,11 +4,6 @@
 #include <stdint.h>
 #include "commands.h"
 
-typedef enum stream {
-    STREAM_NONE,
-    STREAM_CURRENT
-} stream_t;
-
 enum {
     CMD_START,
     CMD_FINISHED,
@@ -21,6 +16,16 @@ enum {
     MOTOR_ERROR
 }; // motor.state
 
+enum {
+    STREAM_NONE,
+    STREAM_CURRENT
+}; // motor.stream
+
+enum {
+    CONTROL_MODE_CURRENT_OL,
+    CONTROL_MODE_VOLTAGE
+}; // motor.control_mode
+
 typedef volatile struct motor {
     uint8_t ix;
     uint8_t state;
@@ -31,7 +36,11 @@ typedef volatile struct motor {
     float current_a;
     float current_b;
     uint8_t pc;
-    stream_t stream;
+    uint8_t stream;
+    uint8_t control_mode;
+    float setp;
+    float km;
+    float r;
     const char * error;
     cmd_functions_t * const * program;
     cmd_data_t * const * program_data;

@@ -6,9 +6,6 @@
 
 motor_t motor[3];
 
-cmd_functions_t * const empty_program[1] = {&cmd_halt};
-cmd_data_t * const empty_program_data[1] = {NULL};
-
 static void handle_streaming(motor_t* m) {
     float currents[2];
     switch(m->stream) {
@@ -26,18 +23,30 @@ static void handle_streaming(motor_t* m) {
     }
 }
 
+static void set_amplitude(motor_t* m) {
+    switch(m->control_mode) {
+        case CONTROL_MODE_CURRENT_OL:
+            m->amp = m->km * m->v + m->setp * m->r;
+            break;
+        case CONTROL_MODE_VOLTAGE:
+            m->amp = m->setp;
+            break;
+        default:
+            m->amp = 0;
+            break;
+    }
+}
+
 void motor_step(motor_t* m) {
     switch(m->state) {
         case MOTOR_RUN:
             m->program[m->pc]->step(m, m->program_data[m->pc]);
-            if(m->v == 0) {
-                m->amp = 0.1;
-            } else {
-                m->amp = 0.4;
-            }
+            set_amplitude(m);
             handle_streaming(m);
             break;
         case MOTOR_STOP:
+            set_amplitude(m);
+            break;
         case MOTOR_ERROR:
             m->amp = 0;
             break;

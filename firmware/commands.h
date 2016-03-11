@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define N_COMMANDS 6
+#define N_COMMANDS 8
 
 struct motor;
 
@@ -39,13 +39,6 @@ typedef struct data_move {
     float d;
     float t;
 } data_move_t;
-
-extern cmd_functions_t cmd_halt;
-extern cmd_functions_t cmd_move_abs;
-extern cmd_functions_t cmd_move_rel;
-extern cmd_functions_t cmd_zero_abs;
-extern cmd_functions_t cmd_zero_rel;
-extern cmd_functions_t cmd_stream;
 
 extern cmd_functions_t * const command_list[N_COMMANDS]; 
 

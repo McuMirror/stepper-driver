@@ -164,6 +164,62 @@ static void stream_step(motor_t* m, cmd_data_t* data) {
 
 DECLARE_CMD(stream);
 
+// Control mode
+
+typedef struct data_control_mode {
+    uint8_t mode;
+    float setp;
+} data_control_mode_t;
+
+const uint8_t control_mode_data_size = sizeof(data_control_mode_t);
+
+static const char control_mode_data_descriptor[] = "\
+    arg enum8 {CONTROL_MODE_CURRENT_OL, CONTROL_MODE_VOLTAGE} mode; \
+    arg float setp; \
+";
+
+static void control_mode_load(motor_t* m, cmd_data_t* data) {
+    data_control_mode_t* control_mode = (data_control_mode_t*)data;
+
+    m->control_mode = control_mode->mode;
+    m->setp = control_mode->setp;
+}
+
+static void control_mode_step(motor_t* m, cmd_data_t* data) {
+    m->pc++;
+    motor_load(m);
+}
+
+DECLARE_CMD(control_mode);
+
+// Tuning
+
+typedef struct data_tuning {
+    float km;
+    float r;
+} data_tuning_t;
+
+const uint8_t tuning_data_size = sizeof(data_tuning_t);
+
+static const char tuning_data_descriptor[] = "\
+    arg float km; \
+    arg float r; \
+";
+
+static void tuning_load(motor_t* m, cmd_data_t* data) {
+    data_tuning_t* tuning = (data_tuning_t*)data;
+
+    m->km = tuning->km;
+    m->r = tuning->r;
+}
+
+static void tuning_step(motor_t* m, cmd_data_t* data) {
+    m->pc++;
+    motor_load(m);
+}
+
+DECLARE_CMD(tuning);
+
 // Command list
 
 cmd_functions_t * const command_list[N_COMMANDS] = { 
@@ -172,5 +228,7 @@ cmd_functions_t * const command_list[N_COMMANDS] = {
     &cmd_move_rel,
     &cmd_zero_abs,
     &cmd_zero_rel,
-    &cmd_stream
+    &cmd_stream,
+    &cmd_control_mode,
+    &cmd_tuning,
 };
