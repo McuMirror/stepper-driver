@@ -14,9 +14,13 @@ static void halt_load(motor_t* m, cmd_data_t* data) {
 static void halt_step(motor_t* m, cmd_data_t* data) {
 }
 
+const uint8_t halt_data_size = 0;
+
 DECLARE_CMD(halt);
 
 // Absolute move
+
+const uint8_t move_abs_data_size = sizeof(data_move_t);
 
 static void move_abs_load(motor_t* m, cmd_data_t* data) {
     data_move_t* d = (data_move_t*)data;
@@ -42,6 +46,8 @@ static void move_abs_step(motor_t* m, cmd_data_t* data) {
 DECLARE_CMD(move_abs);
 
 // Relative move
+
+const uint8_t move_rel_data_size = sizeof(data_move_t);
 
 static void move_rel_load(motor_t* m, cmd_data_t* data) {
     data_move_t* d = (data_move_t*)data;
@@ -69,6 +75,8 @@ DECLARE_CMD(move_rel);
 
 // Zero abs
 
+const uint8_t zero_abs_data_size = sizeof(float);
+
 static void zero_abs_load(motor_t* m, cmd_data_t* data) {
     float* z = (float*)data;
 
@@ -86,6 +94,8 @@ static void zero_abs_step(motor_t* m, cmd_data_t* data) {
 DECLARE_CMD(zero_abs);
 
 // Zero rel
+
+const uint8_t zero_rel_data_size = sizeof(float);
 
 static void zero_rel_load(motor_t* m, cmd_data_t* data) {
     float* z = (float*)data;
@@ -105,12 +115,13 @@ DECLARE_CMD(zero_rel);
 
 // Stream
 
+const uint8_t stream_data_size = sizeof(stream_t);
+
 static void stream_load(motor_t* m, cmd_data_t* data) {
     stream_t* stream = (stream_t*)data;
 
     m->stream = *stream;
-    stream_flush = 1;
-    EP3_Check_Ready();
+    stream_buffer_flush();
 }
 
 static void stream_step(motor_t* m, cmd_data_t* data) {
@@ -120,3 +131,14 @@ static void stream_step(motor_t* m, cmd_data_t* data) {
 }
 
 DECLARE_CMD(stream);
+
+// Command list
+
+cmd_functions_t * const command_list[N_COMMANDS] = { 
+    &cmd_halt,
+    &cmd_move_abs,
+    &cmd_move_rel,
+    &cmd_zero_abs,
+    &cmd_zero_rel,
+    &cmd_stream
+};

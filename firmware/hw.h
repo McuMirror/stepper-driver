@@ -7,7 +7,7 @@
 #define PWM_PERIOD 2250
 #define PWM_DT ((float)(PWM_PERIOD) / (SYSTEM_CLOCK))
 
-#define CURRENT_SCALE (3.3 / (4096 * 4.7 * 0.1))
+#define CURRENT_SCALE ((float)(3.3 / (4096 * 4.7 * 0.1)))
 
 void hw_init();
 void hw_led_on();

@@ -23,3 +23,15 @@ uint8_t status_buffer_put(uint8_t motor, uint8_t pc, uint8_t status) {
     EP2_Check_Ready();
     return 1;
 }
+
+uint8_t stream_buffer_put(void* data, int16_t length) {
+    if(buf_num_free(&stream_buffer) < length) return 0;
+    buf_write(&stream_buffer, data, length);
+    EP3_Check_Ready();
+    return 1;
+}
+
+void stream_buffer_flush() {
+    stream_flush = 1;
+    EP3_Check_Ready();
+}

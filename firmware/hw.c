@@ -5,8 +5,8 @@
 
 #define ADC_DELAY 220
 
-static int16_t adc_conversion[6];
-static int16_t adc_zero[6];
+__IO int16_t adc_conversion[6];
+int16_t adc_zero[6];
 int16_t adc_buffer[6];
 
 void hw_init() {
@@ -175,8 +175,10 @@ void hw_init() {
 
     // Calibrate zero-current
     ADC_StartConversion(ADC1);
-    while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
-    memcpy(adc_zero, adc_conversion, sizeof(adc_zero));
+    while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOS));
+    for(int i = 0; i < 6; i++) {
+        adc_zero[i] = adc_conversion[i];
+    }
 
     // Control loop timer
     TIM_TimeBaseStructure.TIM_Prescaler = 0;

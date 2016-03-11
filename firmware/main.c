@@ -1,6 +1,7 @@
 #include "hw.h"
 #include "motor.h"
 #include "commands.h"
+#include "program.h"
 #include <stddef.h>
 
 #define V 200
@@ -12,12 +13,7 @@ int main() {
     hw_init();
 
     static volatile int i;
-    for(i = 0; i < 2000000; i++);
-
-    static cmd_functions_t * const myprog[4] = {&cmd_stream, &cmd_move_rel, &cmd_stream, &cmd_halt};
-
-    static stream_t stream_current = STREAM_CURRENT;
-    static stream_t stream_nothing = STREAM_NONE;
+    //for(i = 0; i < 20000000; i++);
 
     static data_move_t mymove = {
         .a = 0,
@@ -27,11 +23,22 @@ int main() {
         .end_p = V,
         .end_v = V
     };
-    static cmd_data_t * const myprogdata[4] = {&stream_current, &mymove, &stream_nothing, NULL};
 
-    motor_load_program(&motor[0], myprog, myprogdata);
-    //motor_load_program(&motor[1], myprog, myprogdata);
-    //motor_load_program(&motor[2], myprog, myprogdata);
+    //program_start(0);
+    //program_instruction(0, 2, &mymove, sizeof(mymove)); // move_rel
+    //program_instruction(0, 0, NULL, 0); // halt
+    //program_end(0);
+    //program_load(0);
+    program_immediate(0, 2, &mymove, sizeof(mymove));
+    for(i = 0; i < 2000000; i++);
+    program_immediate(0, 2, &mymove, sizeof(mymove));
+
+    //static cmd_data_t * const myprogdata[4] = {&stream_current, &mymove, &stream_nothing, NULL};
+    //static cmd_data_t * const myprogdata2[2] = {&mymove2, NULL};
+
+    //motor_load_program(&motor[0], myprog, myprogdata);
+    //motor_load_program(&motor[1], myprog2, myprogdata2);
+    //motor_load_program(&motor[2], myprog2, myprogdata2);
 
     hw_led_on();
 

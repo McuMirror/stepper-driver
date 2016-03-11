@@ -9,7 +9,13 @@ typedef enum stream {
     STREAM_CURRENT
 } stream_t;
 
-typedef struct motor {
+enum {
+    CMD_FINISHED,
+    CMD_INTERRUPTED,
+    CMD_ERROR
+};
+
+typedef volatile struct motor {
     enum {
         MOTOR_RUN,
         MOTOR_ERROR

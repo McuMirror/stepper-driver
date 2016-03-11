@@ -22,17 +22,18 @@ void motor_init(motor_t* m) {
 }
 
 static void handle_streaming(motor_t* m) {
+    float currents[2];
     switch(m->stream) {
         case STREAM_NONE:
             break;
         case STREAM_CURRENT:
-            if(buf_num_free(&stream_buffer) < 2 * sizeof(float)) {
+            currents[0] = m->current_a;
+            currents[1] = m->current_b;
+            if(!stream_buffer_put(currents, sizeof(currents))) {
                 m->error = "Stream overrun";
                 motor_error(m);
                 break;
             }
-            buf_write(&stream_buffer, &m->current_a, 2 * sizeof(float));
-            EP3_Check_Ready();
             break;
     }
 }
@@ -55,12 +56,12 @@ void motor_step(motor_t* m) {
 }
 
 void motor_done(motor_t* m) {
-    status_buffer_put(m->ix, m->pc, 0);
+    status_buffer_put(m->ix, m->pc, CMD_FINISHED);
 }
 
 void motor_error(motor_t* m) {
     stream_flush = 1;
-    status_buffer_put(m->ix, m->pc, 1);
+    status_buffer_put(m->ix, m->pc, CMD_ERROR);
     m->state = MOTOR_ERROR;
 }
 
@@ -70,6 +71,9 @@ void motor_load(motor_t* m) {
 
 void motor_load_program(motor_t* m, cmd_functions_t * const * program, cmd_data_t * const * program_data) {
     hw_stop_control_loop();
+    if(m->state == MOTOR_RUN) {
+        status_buffer_put(m->ix, m->pc, CMD_INTERRUPTED);
+    }
     m->program = program;
     m->program_data = program_data;
     m->pc = 0;
