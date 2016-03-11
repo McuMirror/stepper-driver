@@ -12,6 +12,7 @@ static void halt_load(motor_t* m, cmd_data_t* data) {
 }
 
 static void halt_step(motor_t* m, cmd_data_t* data) {
+    motor_halt(m);
 }
 
 const uint8_t halt_data_size = 0;
@@ -37,7 +38,6 @@ static void move_abs_step(motor_t* m, cmd_data_t* data) {
     if(d->t > d->end_t) {
         m->p = d->end_p;
         m->v = d->end_v;
-        motor_done(m);
         m->pc++;
         motor_load(m);
     }
@@ -65,7 +65,6 @@ static void move_rel_step(motor_t* m, cmd_data_t* data) {
     if(d->t > d->end_t) {
         m->p = d->d + d->end_p;
         m->v = d->end_v;
-        motor_done(m);
         m->pc++;
         motor_load(m);
     }
@@ -86,7 +85,6 @@ static void zero_abs_load(motor_t* m, cmd_data_t* data) {
 }
 
 static void zero_abs_step(motor_t* m, cmd_data_t* data) {
-    motor_done(m);
     m->pc++;
     motor_load(m);
 }
@@ -106,7 +104,6 @@ static void zero_rel_load(motor_t* m, cmd_data_t* data) {
 }
 
 static void zero_rel_step(motor_t* m, cmd_data_t* data) {
-    motor_done(m);
     m->pc++;
     motor_load(m);
 }
@@ -125,7 +122,6 @@ static void stream_load(motor_t* m, cmd_data_t* data) {
 }
 
 static void stream_step(motor_t* m, cmd_data_t* data) {
-    motor_done(m);
     m->pc++;
     motor_load(m);
 }

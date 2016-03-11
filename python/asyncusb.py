@@ -22,6 +22,8 @@ class USBTransferError(USBError):
 def asyncTransfer(transfer):
     fut = asyncio.Future()
     def callback(t):
+        if fut.cancelled():
+            return
         try:
             result = t.getStatus()
             if result != TRANSFER_COMPLETED:

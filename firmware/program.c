@@ -29,7 +29,8 @@ program_error_t program_instruction(uint8_t motor_n, uint8_t command_n, void* da
     if(*f->data_size < length) return PROGRAM_BAD_DATA;
     if(mem_ptr + *f->data_size >= PROGRAM_MEMORY_SIZE) return PROGRAM_NOT_ENOUGH_MEMORY;
 
-    uint8_t size = *f->data_size + (*f->data_size & 3);
+    uint8_t size = *f->data_size;
+    if(size & 3 != 0) size = ((*f->data_size) & (uint8_t)(~3)) + 4;
     uint8_t i;
     for(i = 0; i < size; i++) {
         ((uint8_t *)data_mem)[mem_ptr + i] = (i < length) ? ((uint8_t*)data)[i] : 0;

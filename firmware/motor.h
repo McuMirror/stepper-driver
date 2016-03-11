@@ -10,13 +10,14 @@ typedef enum stream {
 } stream_t;
 
 enum {
+    CMD_START,
     CMD_FINISHED,
-    CMD_INTERRUPTED,
     CMD_ERROR
 };
 
 typedef volatile struct motor {
     enum {
+        MOTOR_STOP,
         MOTOR_RUN,
         MOTOR_ERROR
     } state;
@@ -36,13 +37,13 @@ typedef volatile struct motor {
 
 extern motor_t motor[3];
 
-void motor_init(motor_t* motor);
 void motor_step(motor_t* motor);
 
 void motor_load_program(motor_t* m, cmd_functions_t * const * program, cmd_data_t * const * program_data);
 
 void motor_load(motor_t* m);
-void motor_done(motor_t* m);
+void motor_halt(motor_t* m);
 void motor_error(motor_t* m);
+void motor_stop(motor_t* m);
   
 #endif

@@ -332,7 +332,7 @@ RESULT USB_NoData_Setup(uint8_t RequestNo)
       return USB_SUCCESS;
     case USB_PROGRAM_INSTRUCTION:
       error_code = program_instruction(wValue, wIndex, NULL, 0);
-      break;
+      return USB_SUCCESS;
     case USB_PROGRAM_END:
       error_code = program_end(wValue);
       return USB_SUCCESS;
@@ -341,7 +341,7 @@ RESULT USB_NoData_Setup(uint8_t RequestNo)
       return USB_SUCCESS;
     case USB_PROGRAM_IMMEDIATE:
       error_code = program_immediate(wValue, wIndex, NULL, 0);
-      break;
+      return USB_SUCCESS;
     default:
       return USB_UNSUPPORT;
   }
