@@ -147,7 +147,7 @@ DECLARE_CMD(zero_rel);
 const uint8_t stream_data_size = sizeof(uint8_t);
 
 static const char stream_data_descriptor[] = "\
-    arg enum8 {STREAM_NONE, STREAM_CURRENT} stream; \
+    arg enum8 {STREAM_NONE, STREAM_CURRENT, STREAM_VOLTAGE} stream; \
 ";
 
 static void stream_load(motor_t* m, cmd_data_t* data) {

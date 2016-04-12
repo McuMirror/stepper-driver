@@ -6,6 +6,7 @@
 
 int main() {
     hw_init();
+    motor_init();
     hw_led_on();
 
     for(;;);

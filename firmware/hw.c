@@ -3,11 +3,10 @@
 #include "usb_lib.h"
 #include <string.h>
 
-#define ADC_DELAY 220
-
 __IO int16_t adc_conversion[6];
 int16_t adc_zero[6];
 int16_t adc_buffer[6];
+uint8_t run_control_loop = 1;
 
 void hw_init() {
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -21,9 +20,9 @@ void hw_init() {
     // Clocks 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA | RCC_AHBPeriph_GPIOB | RCC_AHBPeriph_GPIOC |
                           RCC_AHBPeriph_ADC12 | RCC_AHBPeriph_DMA1, ENABLE);
-    RCC_ADCCLKConfig(RCC_ADC12PLLCLK_Div2);
+    RCC_ADCCLKConfig(RCC_ADC12PLLCLK_Div1);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM15 | RCC_APB2Periph_TIM16, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1 | RCC_APB2Periph_TIM15 | RCC_APB2Periph_TIM17, ENABLE);
  
     // LED
     hw_led_off();
@@ -44,6 +43,11 @@ void hw_init() {
     TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
     TIM_TimeBaseInit(TIM15, &TIM_TimeBaseStructure);
 
+    // ADC Timer (measure twice per cycle)
+    TIM_TimeBaseStructure.TIM_Period = (PWM_PERIOD / 2) - 1;
+    TIM_TimeBaseInit(TIM17, &TIM_TimeBaseStructure);
+
+    // PWM Outputs
     TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM2;
     TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
     TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
@@ -73,14 +77,17 @@ void hw_init() {
     TIM_Cmd(TIM1, ENABLE);
     TIM_Cmd(TIM2, ENABLE);
     TIM_Cmd(TIM15, ENABLE);
+    TIM_Cmd(TIM17, ENABLE);
     TIM_CtrlPWMOutputs(TIM1, ENABLE);
     TIM_CtrlPWMOutputs(TIM2, ENABLE);
     TIM_CtrlPWMOutputs(TIM15, ENABLE);
 
     // Synchronize Timers
+    TIM1->CNT = 0;
     TIM2->CNT = TIM1->CNT;
     TIM15->CNT = TIM1->CNT;
     TIM1->CNT = TIM1->CNT;
+    TIM17->CNT = TIM1->CNT + (PWM_PERIOD / 4);
 
     // PWM Output GPIO
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7 | GPIO_Pin_8 | GPIO_Pin_9 | GPIO_Pin_10 |
@@ -142,7 +149,7 @@ void hw_init() {
 
     ADC_CommonInit(ADC1, &ADC_CommonInitStructure);
 
-    ADC_InitStructure.ADC_ContinuousConvMode = ADC_ContinuousConvMode_Enable;
+    ADC_InitStructure.ADC_ContinuousConvMode = ADC_ContinuousConvMode_Disable;
     ADC_InitStructure.ADC_Resolution = ADC_Resolution_12b; 
     ADC_InitStructure.ADC_ExternalTrigConvEvent = ADC_ExternalTrigConvEvent_0;         
     ADC_InitStructure.ADC_ExternalTrigEventEdge = ADC_ExternalTrigEventEdge_None;
@@ -152,12 +159,12 @@ void hw_init() {
     ADC_InitStructure.ADC_NbrOfRegChannel = 6;
     ADC_Init(ADC1, &ADC_InitStructure);
 
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_1,  1, ADC_SampleTime_7Cycles5);
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_2,  2, ADC_SampleTime_7Cycles5);
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_3,  3, ADC_SampleTime_7Cycles5);
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_4,  4, ADC_SampleTime_7Cycles5);
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_5,  5, ADC_SampleTime_7Cycles5);
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 6, ADC_SampleTime_7Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_1,  1, ADC_SampleTime_1Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_2,  2, ADC_SampleTime_1Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_3,  3, ADC_SampleTime_1Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_4,  4, ADC_SampleTime_1Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_5,  5, ADC_SampleTime_1Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 6, ADC_SampleTime_1Cycles5);
 
     ADC_Cmd(ADC1, ENABLE);
     ADC_DMAConfig(ADC1, ADC_DMAMode_Circular);
@@ -180,24 +187,20 @@ void hw_init() {
         adc_zero[i] = adc_conversion[i];
     }
 
-    // Control loop timer
-    TIM_TimeBaseStructure.TIM_Prescaler = 0;
-    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-    TIM_TimeBaseStructure.TIM_Period = PWM_PERIOD - 1;
-    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-    TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-    TIM_TimeBaseInit(TIM16, &TIM_TimeBaseStructure);
-    TIM_Cmd(TIM16, ENABLE);
-
-    TIM16->CNT = TIM1->CNT + ADC_DELAY;
-
     // NVIC
-    NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_TIM16_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannel = TIM1_TRG_COM_TIM17_IRQn; // TIM17 = ADC Read Start
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
-    TIM_ITConfig(TIM16, TIM_IT_Update, ENABLE);
+    TIM_ITConfig(TIM17, TIM_IT_Update, ENABLE);
+
+    NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel1_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // DMA1 = ADC Read Done
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+    DMA_ITConfig(DMA1_Channel1, DMA1_IT_TC1, ENABLE);
 
     // USB
     Set_System();
@@ -206,21 +209,7 @@ void hw_init() {
     USB_Init();
 }
 
-void hw_pwm(int16_t m1a, int16_t m1b, int16_t m2a, int16_t m2b, int16_t m3a, int16_t m3b) {
-    TIM1->CCR1 =  (m1a + PWM_PERIOD) / 2;
-    TIM1->CCR2 =  (m1b + PWM_PERIOD) / 2;
-    TIM1->CCR3 =  (m2a + PWM_PERIOD) / 2;
-    TIM2->CCR3 =  (m2b + PWM_PERIOD) / 2;
-    TIM2->CCR4 =  (m2b + PWM_PERIOD) / 2;
-    TIM15->CCR1 = (m3a + PWM_PERIOD) / 2;
-    TIM2->CCR1 =  (m3b + PWM_PERIOD) / 2;
-    TIM2->CCR2 =  (m3b + PWM_PERIOD) / 2;
-}
-
 void hw_start_adc_conversion() {
-    for(int i = 0; i < 6; i++) {
-        adc_buffer[i] = adc_zero[i] - adc_conversion[i];
-    }
     ADC_StartConversion(ADC1);
 }
 
@@ -230,12 +219,4 @@ void hw_led_on() {
 
 void hw_led_off() {
     GPIOC->BRR = GPIO_Pin_14;
-}
-
-void hw_start_control_loop() {
-    TIM_ITConfig(TIM16, TIM_IT_Update, ENABLE);
-}
-
-void hw_stop_control_loop() {
-    TIM_ITConfig(TIM16, TIM_IT_Update, DISABLE);
 }

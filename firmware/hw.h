@@ -13,10 +13,8 @@ void hw_init();
 void hw_led_on();
 void hw_led_off();
 void hw_start_adc_conversion();
-void hw_pwm(int16_t m1a, int16_t m1b, int16_t m2a, int16_t m2b, int16_t m3a, int16_t m3b);
-void hw_start_control_loop();
-void hw_stop_control_loop();
  
 extern int16_t adc_buffer[6];
+extern uint8_t run_control_loop;
 
 #endif

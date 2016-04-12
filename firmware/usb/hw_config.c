@@ -162,9 +162,9 @@ void USB_Config(void)
   NVIC_Init(&NVIC_InitStructure);
   
   /* Enable the USB Wake-up interrupt */
-  NVIC_InitStructure.NVIC_IRQChannel = USBWakeUp_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_Init(&NVIC_InitStructure);
+  // NVIC_InitStructure.NVIC_IRQChannel = USBWakeUp_IRQn;
+  // NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  // NVIC_Init(&NVIC_InitStructure);
 }
 
 /*******************************************************************************

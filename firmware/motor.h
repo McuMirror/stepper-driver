@@ -18,7 +18,8 @@ enum {
 
 enum {
     STREAM_NONE,
-    STREAM_CURRENT
+    STREAM_CURRENT,
+    STREAM_VOLTAGE
 }; // motor.stream
 
 enum {
@@ -33,6 +34,8 @@ typedef volatile struct motor {
     float v;
     float amp;
     float zero;
+    int16_t voltage_a;
+    int16_t voltage_b;
     float current_a;
     float current_b;
     uint8_t pc;
@@ -47,6 +50,8 @@ typedef volatile struct motor {
 } motor_t;
 
 extern motor_t motor[3];
+
+void motor_init();
 
 void motor_step(motor_t* motor);
 

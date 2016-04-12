@@ -4,7 +4,7 @@
 #include "circular_buffer.h"
 
 #define STATUS_BUF_SIZE 64
-#define STREAM_BUF_SIZE 1024
+#define STREAM_BUF_SIZE 2048
 
 extern circ_buffer_t status_buffer;
 extern circ_buffer_t stream_buffer;

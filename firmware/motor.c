@@ -6,8 +6,15 @@
 
 motor_t motor[3];
 
+void motor_init() {
+    motor[0].ix = 0;
+    motor[1].ix = 1;
+    motor[2].ix = 2;
+}
+
 static void handle_streaming(motor_t* m) {
     float currents[2];
+    int16_t voltages[2];
     switch(m->stream) {
         case STREAM_NONE:
             break;
@@ -15,6 +22,15 @@ static void handle_streaming(motor_t* m) {
             currents[0] = m->current_a;
             currents[1] = m->current_b;
             if(!stream_buffer_put(currents, sizeof(currents))) {
+                m->error = "Stream overrun";
+                motor_error(m);
+                break;
+            }
+            break;
+        case STREAM_VOLTAGE:
+            voltages[0] = m->voltage_a;
+            voltages[1] = m->voltage_b;
+            if(!stream_buffer_put(voltages, sizeof(voltages))) {
                 m->error = "Stream overrun";
                 motor_error(m);
                 break;
@@ -70,13 +86,13 @@ void motor_load(motor_t* m) {
 }
 
 void motor_load_program(motor_t* m, cmd_functions_t * const * program, cmd_data_t * const * program_data) {
-    hw_stop_control_loop();
+    run_control_loop = 0;
     m->program = program;
     m->program_data = program_data;
     m->pc = 0;
     m->state = MOTOR_RUN;
     motor_load(m);
-    hw_start_control_loop();
+    run_control_loop = 1;
     status_buffer_put(m->ix, m->pc, CMD_START);
 }
 
